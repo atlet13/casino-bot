@@ -4,7 +4,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from aiogram.filters import Command
 
 API_TOKEN = "8659665258:AAFyL7OZBZqkU-D7iaE2auHyf73KdYyeeIM"
-WEBAPP_URL = "https://casino-bot-1-p7mp.onrender.com"
+WEBAPP_URL = "https://casino-bot-87yq.onrender.com"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
