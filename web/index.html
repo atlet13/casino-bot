@@ -1,27 +1,230 @@
 <!DOCTYPE html>
 <html>
-<body style="background:black;color:white;text-align:center">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {background:#0b0f1a;color:white;font-family:sans-serif;text-align:center}
+.container {background:#111827;padding:20px;border-radius:20px;margin:10px}
+button {padding:12px;margin:5px;border:none;border-radius:10px;background:#22c55e;color:black;font-size:16px}
+input {padding:10px;font-size:16px;border-radius:10px;border:none}
 
-<h1>🎰 PLINKO WORKS</h1>
+.card {
+display:inline-block;
+width:50px;
+height:70px;
+background:white;
+color:black;
+border-radius:8px;
+margin:5px;
+font-weight:bold;
+display:flex;
+align-items:center;
+justify-content:center;
+}
 
-<button onclick="play()">Грати</button>
+canvas {background:#000;border-radius:10px;margin-top:10px}
+</style>
+</head>
 
-<p id="res"></p>
+<body>
+
+<h1>🎰 CASINO</h1>
+
+<div class="container">
+
+<p id="balance">Баланс: ...</p>
+
+<input id="bet" value="10">
+
+<br><br>
+
+<button onclick="showGame('plinko')">🎰 Plinko</button>
+<button onclick="showGame('bj')">🃏 Blackjack</button>
+
+<div id="game"></div>
+
+</div>
+
+<div class="container">
+<h3>ADMIN</h3>
+<input id="edge" placeholder="0.6">
+<button onclick="setEdge()">Set Edge</button>
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <script>
-function play(){
-fetch("/plinko",{
+let tg = window.Telegram.WebApp;
+let user_id = tg.initDataUnsafe.user?.id || "demo";
+
+function loadBalance(){
+fetch("/balance",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({bet:10})
+body:JSON.stringify({user_id})
 })
 .then(r=>r.json())
 .then(d=>{
-document.getElementById("res").innerText="x"+d.mult+" → "+d.win;
+document.getElementById("balance").innerText="💰 "+d.balance;
 });
 }
+
+function showGame(g){
+if(g==="plinko"){
+document.getElementById("game").innerHTML=`
+<canvas id="plinko" width="300" height="400"></canvas>
+<br>
+<button onclick="drop()">🎯 Drop</button>
+<p id="res"></p>
+`;
+initPlinko();
+}
+
+if(g==="bj"){
+document.getElementById("game").innerHTML=`
+<div id="player"></div>
+<div id="dealer"></div>
+<br>
+<button onclick="bjStart()">Start</button>
+<button onclick="hit()">Hit</button>
+<button onclick="stand()">Stand</button>
+<p id="bjres"></p>
+`;
+}
+}
+
+// -------- PLINKO --------
+let canvas, ctx, pegs = [], ball = null;
+
+function initPlinko(){
+canvas = document.getElementById("plinko");
+ctx = canvas.getContext("2d");
+
+pegs = [];
+for(let y=50;y<300;y+=50){
+for(let x=25;x<300;x+=50){
+pegs.push({x,y});
+}
+}
+}
+
+function drop(){
+ball = {x:150,y:0,vx:0,vy:0};
+animate();
+}
+
+function animate(){
+ctx.clearRect(0,0,300,400);
+
+pegs.forEach(p=>{
+ctx.beginPath();
+ctx.arc(p.x,p.y,5,0,Math.PI*2);
+ctx.fill();
+});
+
+if(ball){
+ball.vy += 0.3;
+ball.y += ball.vy;
+ball.x += ball.vx;
+
+pegs.forEach(p=>{
+let dx = ball.x - p.x;
+let dy = ball.y - p.y;
+let dist = Math.sqrt(dx*dx+dy*dy);
+if(dist < 10){
+ball.vx += (Math.random()-0.5)*2;
+}
+});
+
+ctx.beginPath();
+ctx.arc(ball.x,ball.y,8,0,Math.PI*2);
+ctx.fill();
+
+if(ball.y < 380){
+requestAnimationFrame(animate);
+} else {
+play();
+}
+}
+}
+
+function play(){
+let bet = document.getElementById("bet").value;
+
+fetch("/play",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({user_id, bet})
+})
+.then(r=>r.json())
+.then(d=>{
+document.getElementById("res").innerText="🎯 x"+d.mult+" → "+d.win;
+loadBalance();
+});
+}
+
+// -------- BLACKJACK --------
+function renderCards(arr, el){
+document.getElementById(el).innerHTML =
+arr.map(c => `<div class="card">${c}</div>`).join("");
+}
+
+function bjStart(){
+let bet = document.getElementById("bet").value;
+
+fetch("/bj/start",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({user_id, bet})
+})
+.then(r=>r.json())
+.then(d=>{
+renderCards(d.player,"player");
+renderCards(d.dealer,"dealer");
+loadBalance();
+});
+}
+
+function hit(){
+fetch("/bj/hit",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({user_id})
+})
+.then(r=>r.json())
+.then(d=>{
+renderCards(d.player,"player");
+});
+}
+
+function stand(){
+fetch("/bj/stand",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({user_id})
+})
+.then(r=>r.json())
+.then(d=>{
+renderCards(d.dealer,"dealer");
+document.getElementById("bjres").innerText="RESULT: "+d.result;
+loadBalance();
+});
+}
+
+// -------- ADMIN --------
+function setEdge(){
+fetch("/admin/set_edge",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+edge: document.getElementById("edge").value,
+key:"admin123"
+})
+});
+}
+
+loadBalance();
 </script>
 
 </body>
-</html>
 </html>
