@@ -18,19 +18,9 @@ def get_mult():
 @app.route("/plinko", methods=["POST"])
 def plinko():
     data = request.json
-
-    try:
-        bet = float(data.get("bet", 0))
-    except:
-        bet = 0
-
+    bet = float(data.get("bet", 0))
     mult = get_mult()
-    win = bet * mult
-
-    return jsonify({
-        "mult": mult,
-        "win": win
-    })
+    return jsonify({"mult": mult, "win": bet * mult})
 
 @app.route("/")
 def index():
