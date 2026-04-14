@@ -3,8 +3,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from aiogram.filters import Command
 
-API_TOKEN = "ТУТ_ТВІЙ_ТОКЕН"
-WEBAPP_URL = "https://тут-буде-render-url"
+API_TOKEN = "8659665258:AAFyL7OZBZqkU-D7iaE2auHyf73KdYyeeIM"
+WEBAPP_URL = "https://casino-bot-87yq.onrender.com"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
