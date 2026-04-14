@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__, static_folder="web", static_url_path="")
 
-balance = 100
+balance = 10000
 house_edge = 0.6  # 0.0 - чесно, 1.0 - жорсткий обман
 
 # ====== ГОЛОВНА СТОРІНКА ======
